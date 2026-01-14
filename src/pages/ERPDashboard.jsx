@@ -9,6 +9,7 @@ import {
   CreditCard,
   ShoppingCart
 } from 'lucide-react'
+import { API_URL } from '../config/api.js'
 import './ERPDashboard.css'
 
 /**
@@ -27,7 +28,7 @@ function ERPDashboard() {
       const dateFrom = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
       const dateTo = new Date().toISOString()
 
-      const response = await fetch(`/api/report/dashboard?dateFrom=${dateFrom}&dateTo=${dateTo}`)
+      const response = await fetch(`${API_URL}/report/dashboard?dateFrom=${dateFrom}&dateTo=${dateTo}`)
       const data = await response.json()
       setStats(data)
     } catch (error) {

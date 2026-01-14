@@ -9,6 +9,7 @@ import {
   DollarSign,
   ShoppingCart
 } from 'lucide-react'
+import { API_URL } from '../config/api.js'
 import './Clientes.css'
 
 /**
@@ -41,8 +42,8 @@ function Clientes() {
     try {
       setLoading(true)
       const url = search 
-        ? `/api/client?search=${encodeURIComponent(search)}`
-        : '/api/client'
+        ? `${API_URL}/client?search=${encodeURIComponent(search)}`
+        : `${API_URL}/client`
       
       const response = await fetch(url)
       const data = await response.json()
@@ -87,8 +88,8 @@ function Clientes() {
   const handleView = async (client) => {
     try {
       const [historyRes, arRes] = await Promise.all([
-        fetch(`/api/client/${client.userId}/history`),
-        fetch(`/api/client/${client.userId}/accounts-receivable`)
+        fetch(`${API_URL}/client/${client.userId}/history`),
+        fetch(`${API_URL}/client/${client.userId}/accounts-receivable`)
       ])
 
       const history = await historyRes.json()
@@ -108,8 +109,8 @@ function Clientes() {
     e.preventDefault()
     try {
       const url = formData.userId 
-        ? `/api/client/${formData.userId}`
-        : '/api/client'
+        ? `${API_URL}/client/${formData.userId}`
+        : `${API_URL}/client`
       
       const method = formData.userId ? 'PUT' : 'POST'
 
@@ -133,7 +134,7 @@ function Clientes() {
     if (!confirm('¿Estás seguro de desactivar este cliente?')) return
 
     try {
-      const response = await fetch(`/api/client/${userId}`, {
+      const response = await fetch(`${API_URL}/client/${userId}`, {
         method: 'DELETE'
       })
 

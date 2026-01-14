@@ -8,7 +8,6 @@ git init
 git add .
 git commit -m "Initial commit: ImBlasco Frontend - Clon del sitio web con Chat B2B integrado"
 git branch -M main
-git remote remove origin 2>nul
 git remote add origin git@github.com:JAVIEBRH/IMBLASCOASISTENTEFRONTEND.git
 echo.
 echo 📤 Subiendo a GitHub...

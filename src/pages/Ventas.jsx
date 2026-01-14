@@ -13,6 +13,7 @@ import {
   Clock,
   FileText
 } from 'lucide-react'
+import { API_URL } from '../config/api.js'
 import './Ventas.css'
 
 /**
@@ -45,7 +46,7 @@ function Ventas() {
   const loadOrders = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/order')
+      const response = await fetch(`${API_URL}/order`)
       const data = await response.json()
       
       if (data.orders) {
@@ -122,7 +123,7 @@ function Ventas() {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      const response = await fetch(`/api/order/${orderId}/status`, {
+      const response = await fetch(`${API_URL}/order/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -140,7 +141,7 @@ function Ventas() {
 
   const handleSendToErp = async (orderId) => {
     try {
-      const response = await fetch(`/api/order/${orderId}/send-to-erp`, {
+      const response = await fetch(`${API_URL}/order/${orderId}/send-to-erp`, {
         method: 'POST'
       })
 

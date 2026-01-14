@@ -4,179 +4,200 @@
  * Texto libre con diseño moderno y profesional
  */
 
-import { useState, useEffect, useRef } from 'react'
-import { MessageCircle, X, Send, Bot, User } from 'lucide-react'
+import { useState, useEffect, useRef } from "react";
+import { MessageCircle, X, Send, Bot, User } from "lucide-react";
 
-// API URL (proxy configurado en vite.config.js)
-const API_URL = '/api'
+// API URL (configuración centralizada)
+import { API_URL } from '../../config/api.js'
 
 /**
  * Componente principal del Chat B2B con IA
  */
 const B2BChat = ({ userId, isAuthenticated = false }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState([])
-  const [inputMessage, setInputMessage] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [cart, setCart] = useState({})
-  
-  const messagesEndRef = useRef(null)
-  const inputRef = useRef(null)
-  const messagesContainerRef = useRef(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [cart, setCart] = useState({});
+
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   // Auto-scroll al final
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // Mensaje de bienvenida al abrir
   useEffect(() => {
     if (isOpen && messages.length === 0 && userId) {
-      initChat()
+      initChat();
     }
-  }, [isOpen, userId])
+  }, [isOpen, userId]);
 
   // Enfocar input al abrir
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 300)
+      setTimeout(() => inputRef.current?.focus(), 300);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   /**
    * Inicializar chat
    */
   const initChat = async () => {
-    if (!userId) return
-    
-    setIsLoading(true)
+    if (!userId) return;
+
+    setIsLoading(true);
     try {
       const res = await fetch(`${API_URL}/chat/init`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
-      })
-      
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      
-      const data = await res.json()
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
       if (data.success) {
-        addBotMessage(data.botMessage || '¡Hola! 👋 Soy tu Asistente Virtual de ImBlasco. ¿En qué puedo ayudarte?')
-        setCart(data.cart || {})
+        addBotMessage(
+          data.botMessage ||
+            "¡Hola! 👋 Soy tu Asistente Virtual de ImBlasco. ¿En qué puedo ayudarte?"
+        );
+        setCart(data.cart || {});
       }
     } catch (error) {
-      console.error('Error init chat:', error)
-      addBotMessage('¡Hola! 👋 Soy tu Asistente Virtual de ImBlasco. ¿En qué puedo ayudarte?')
+      console.error("Error init chat:", error);
+      addBotMessage(
+        "¡Hola! 👋 Soy tu Asistente Virtual de ImBlasco. ¿En qué puedo ayudarte?"
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   /**
    * Agregar mensaje del bot
    */
   const addBotMessage = (text) => {
-    setMessages(prev => [...prev, {
-      id: Date.now() + Math.random(),
-      text,
-      sender: 'bot',
-      timestamp: new Date()
-    }])
-  }
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now() + Math.random(),
+        text,
+        sender: "bot",
+        timestamp: new Date(),
+      },
+    ]);
+  };
 
   /**
    * Agregar mensaje del usuario
    */
   const addUserMessage = (text) => {
-    setMessages(prev => [...prev, {
-      id: Date.now() + Math.random(),
-      text,
-      sender: 'user',
-      timestamp: new Date()
-    }])
-  }
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now() + Math.random(),
+        text,
+        sender: "user",
+        timestamp: new Date(),
+      },
+    ]);
+  };
 
   /**
    * Enviar mensaje al backend con IA
    */
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading || !userId) return
+    if (!inputMessage.trim() || isLoading || !userId) return;
 
-    const userMessage = inputMessage.trim()
-    setInputMessage('')
-    addUserMessage(userMessage)
-    setIsLoading(true)
+    const userMessage = inputMessage.trim();
+    setInputMessage("");
+    addUserMessage(userMessage);
+    setIsLoading(true);
 
     try {
       // Obtener historial de conversación (últimos 10 mensajes)
-      const conversationHistory = messages
-        .slice(-10)
-        .map(msg => ({
-          role: msg.sender === 'user' ? 'user' : 'assistant',
-          content: msg.text
-        }))
+      const conversationHistory = messages.slice(-10).map((msg) => ({
+        role: msg.sender === "user" ? "user" : "assistant",
+        content: msg.text,
+      }));
 
       const response = await fetch(`${API_URL}/chat/message`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userId: userId,
           message: userMessage,
-          conversationHistory
-        })
-      })
+          conversationHistory,
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.success) {
-        addBotMessage(data.botMessage || data.message || 'Lo siento, no pude procesar tu mensaje.')
-        if (data.cart) setCart(data.cart)
+        addBotMessage(
+          data.botMessage ||
+            data.message ||
+            "Lo siento, no pude procesar tu mensaje."
+        );
+        if (data.cart) setCart(data.cart);
       } else {
-        throw new Error(data.error || 'Error desconocido')
+        throw new Error(data.error || "Error desconocido");
+      }
+    } catch (error) {
+      console.error("Error al enviar mensaje:", error);
+
+      // Mensajes de error más específicos
+      let errorMessage = "⚠️ Lo siento, hubo un error al procesar tu mensaje.";
+
+      if (
+        error.message.includes("Failed to fetch") ||
+        error.message.includes("NetworkError")
+      ) {
+        errorMessage =
+          "⚠️ Error de conexión. Verifica que el backend esté corriendo en http://localhost:3001";
+      } else if (error.message.includes("HTTP 500")) {
+        errorMessage =
+          "⚠️ Error en el servidor. Por favor, intenta de nuevo en un momento.";
+      } else if (error.message.includes("HTTP 400")) {
+        errorMessage =
+          "⚠️ Error en la solicitud. Por favor, verifica tu mensaje.";
+      } else if (error.message) {
+        errorMessage = `⚠️ ${error.message}`;
       }
 
-    } catch (error) {
-      console.error('Error al enviar mensaje:', error)
-      
-      // Mensajes de error más específicos
-      let errorMessage = '⚠️ Lo siento, hubo un error al procesar tu mensaje.'
-      
-      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        errorMessage = '⚠️ Error de conexión. Verifica que el backend esté corriendo en http://localhost:3001'
-      } else if (error.message.includes('HTTP 500')) {
-        errorMessage = '⚠️ Error en el servidor. Por favor, intenta de nuevo en un momento.'
-      } else if (error.message.includes('HTTP 400')) {
-        errorMessage = '⚠️ Error en la solicitud. Por favor, verifica tu mensaje.'
-      } else if (error.message) {
-        errorMessage = `⚠️ ${error.message}`
-      }
-      
-      addBotMessage(errorMessage)
+      addBotMessage(errorMessage);
     } finally {
-      setIsLoading(false)
-      setTimeout(() => inputRef.current?.focus(), 100)
+      setIsLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }
+  };
 
   /**
    * Manejar Enter para enviar
    */
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage()
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
-  }
+  };
 
   // Calcular items del carrito
-  const cartItemCount = Object.keys(cart.items || {}).length
-  const cartTotalUnits = Object.values(cart.items || {}).reduce((sum, item) => sum + (item.cantidad || 0), 0)
+  const cartItemCount = Object.keys(cart.items || {}).length;
+  const cartTotalUnits = Object.values(cart.items || {}).reduce(
+    (sum, item) => sum + (item.cantidad || 0),
+    0
+  );
 
   // Si no está autenticado, mostrar solo botón
   if (!isAuthenticated) {
@@ -188,7 +209,7 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
       >
         <MessageCircle size={24} />
       </button>
-    )
+    );
   }
 
   return (
@@ -198,8 +219,8 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         onClick={() => setIsOpen(!isOpen)}
         className="chat-toggle-btn"
         style={{
-          backgroundColor: isOpen ? '#dc2626' : 'rgb(244, 165, 28)',
-          transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)'
+          backgroundColor: isOpen ? "#dc2626" : "rgb(244, 165, 28)",
+          transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
         }}
       >
         {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
@@ -219,9 +240,11 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
                 <Bot size={20} />
               </div>
               <div className="chat-header-info">
-                <div className="chat-header-name">Asistente Virtual de ImBlasco</div>
+                <div className="chat-header-name">
+                  Asistente Virtual de ImBlasco
+                </div>
                 <div className="chat-header-status">
-                  {isLoading ? 'Escribiendo...' : 'En línea'}
+                  {isLoading ? "Escribiendo..." : "En línea"}
                 </div>
               </div>
             </div>
@@ -237,23 +260,29 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`message-wrapper ${msg.sender === 'user' ? 'user-message' : 'bot-message'}`}
+                className={`message-wrapper ${
+                  msg.sender === "user" ? "user-message" : "bot-message"
+                }`}
               >
-                {msg.sender === 'bot' && (
+                {msg.sender === "bot" && (
                   <div className="message-avatar bot-avatar-small">
                     <Bot size={14} />
                   </div>
                 )}
-                <div className={`message-bubble ${msg.sender === 'user' ? 'user-bubble' : 'bot-bubble'}`}>
+                <div
+                  className={`message-bubble ${
+                    msg.sender === "user" ? "user-bubble" : "bot-bubble"
+                  }`}
+                >
                   <div className="message-text">{msg.text}</div>
                   <div className="message-time">
-                    {new Date(msg.timestamp).toLocaleTimeString('es-CL', {
-                      hour: '2-digit',
-                      minute: '2-digit'
+                    {new Date(msg.timestamp).toLocaleTimeString("es-CL", {
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
                   </div>
                 </div>
-                {msg.sender === 'user' && (
+                {msg.sender === "user" && (
                   <div className="message-avatar user-avatar-small">
                     <User size={14} />
                   </div>
@@ -264,9 +293,18 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
             {/* Indicador de escritura */}
             {isLoading && (
               <div className="typing-indicator">
-                <div className="typing-dot" style={{ animationDelay: '0s' }}></div>
-                <div className="typing-dot" style={{ animationDelay: '0.2s' }}></div>
-                <div className="typing-dot" style={{ animationDelay: '0.4s' }}></div>
+                <div
+                  className="typing-dot"
+                  style={{ animationDelay: "0s" }}
+                ></div>
+                <div
+                  className="typing-dot"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
+                <div
+                  className="typing-dot"
+                  style={{ animationDelay: "0.4s" }}
+                ></div>
               </div>
             )}
 
@@ -297,7 +335,10 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
           {/* Resumen carrito (si hay items) */}
           {cartItemCount > 0 && (
             <div className="chat-cart-summary">
-              <span>🛒 {cartItemCount} producto(s) · {cartTotalUnits.toLocaleString()} unidades</span>
+              <span>
+                🛒 {cartItemCount} producto(s) ·{" "}
+                {cartTotalUnits.toLocaleString()} unidades
+              </span>
             </div>
           )}
         </div>
@@ -670,7 +711,7 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         }
       `}</style>
     </>
-  )
-}
+  );
+};
 
-export default B2BChat
+export default B2BChat;

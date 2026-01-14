@@ -9,6 +9,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react'
+import { API_URL } from '../config/api.js'
 import './Facturacion.css'
 
 /**
@@ -34,7 +35,7 @@ function Facturacion() {
   const loadInvoices = async () => {
     try {
       setLoading(true)
-      let url = '/api/invoice'
+      let url = `${API_URL}/invoice`
       const params = new URLSearchParams()
       
       if (filters.status !== 'all') {
@@ -57,7 +58,7 @@ function Facturacion() {
 
   const loadPendingOrders = async () => {
     try {
-      const response = await fetch('/api/order?status=confirmed')
+      const response = await fetch(`${API_URL}/order?status=confirmed`)
       const data = await response.json()
       setOrders(data.orders?.filter(o => o.status === 'confirmed') || [])
     } catch (error) {
@@ -67,7 +68,7 @@ function Facturacion() {
 
   const handleCreateInvoice = async (orderId) => {
     try {
-      const response = await fetch(`/api/invoice/create-from-order/${orderId}`, {
+      const response = await fetch(`${API_URL}/invoice/create-from-order/${orderId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invoiceType: 'factura' })
@@ -92,7 +93,7 @@ function Facturacion() {
     if (!confirm('¿Estás seguro de cancelar esta factura?')) return
 
     try {
-      const response = await fetch(`/api/invoice/${invoiceId}/cancel`, {
+      const response = await fetch(`${API_URL}/invoice/${invoiceId}/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: 'Cancelada por usuario' })
@@ -111,7 +112,7 @@ function Facturacion() {
 
   const handleViewInvoice = async (invoiceId) => {
     try {
-      const response = await fetch(`/api/invoice/${invoiceId}`)
+      const response = await fetch(`${API_URL}/invoice/${invoiceId}`)
       const invoice = await response.json()
       setSelectedInvoice(invoice)
     } catch (error) {
