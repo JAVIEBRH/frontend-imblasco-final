@@ -164,7 +164,7 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         error.message.includes("NetworkError")
       ) {
         errorMessage =
-          "⚠️ Error de conexión. Verifica que el backend esté corriendo en http://localhost:3001";
+          "⚠️ Error de conexión con el backend. Por favor, intenta de nuevo.";
       } else if (error.message.includes("HTTP 500")) {
         errorMessage =
           "⚠️ Error en el servidor. Por favor, intenta de nuevo en un momento.";
