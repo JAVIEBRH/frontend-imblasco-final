@@ -2,7 +2,6 @@ import TopHeader from '../components/Header/TopHeader'
 import MainHeader from '../components/Header/MainHeader'
 import Navigation from '../components/Header/Navigation'
 import Footer from '../components/Footer/Footer'
-import WhatsAppChat from '../components/WhatsAppChat/WhatsAppChat'
 import { Download, FileText, Image, File } from 'lucide-react'
 
 /**
@@ -158,7 +157,6 @@ const Descargas = ({ onLoginClick }) => {
       </main>
 
       <Footer />
-      <WhatsAppChat />
     </div>
   )
 }

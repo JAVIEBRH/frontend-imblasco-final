@@ -219,8 +219,8 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         onClick={() => setIsOpen(!isOpen)}
         className="chat-toggle-btn"
         style={{
-          backgroundColor: isOpen ? "#dc2626" : "rgb(244, 165, 28)",
-          transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
+          backgroundColor: isOpen ? "#64748b" : "rgb(244, 165, 28)",
+          transform: isOpen ? "scale(0.98)" : "scale(1)",
         }}
       >
         {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
@@ -241,10 +241,10 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
               </div>
               <div className="chat-header-info">
                 <div className="chat-header-name">
-                  Asistente Virtual de ImBlasco
+                  ImBlasco · Asistente Virtual
                 </div>
                 <div className="chat-header-status">
-                  {isLoading ? "Escribiendo..." : "En línea"}
+                  ● {isLoading ? "Escribiendo..." : "En línea"}
                 </div>
               </div>
             </div>
@@ -282,11 +282,7 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
                     })}
                   </div>
                 </div>
-                {msg.sender === "user" && (
-                  <div className="message-avatar user-avatar-small">
-                    <User size={14} />
-                  </div>
-                )}
+                {msg.sender === "user" && null}
               </div>
             ))}
 
@@ -319,7 +315,7 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Escribe tu mensaje..."
+              placeholder="Pregunta por stock, precios u horarios…"
               disabled={isLoading}
               className="chat-input"
             />
@@ -345,36 +341,44 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
       )}
 
       <style>{`
+        :root {
+          --chat-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        }
+
         /* Botón flotante */
         .chat-toggle-btn {
           position: fixed;
           bottom: 24px;
           right: 24px;
-          width: 64px;
-          height: 64px;
+          width: 60px;
+          height: 60px;
           border-radius: 50%;
           background-color: rgb(244, 165, 28);
           color: white;
           border: none;
           cursor: pointer;
-          box-shadow: 0 4px 20px rgba(244, 165, 28, 0.4);
+          box-shadow: 0 10px 24px rgba(15, 23, 42, 0.2);
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 10000;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.25s ease;
         }
-        
+
         .chat-toggle-btn:hover {
-          transform: scale(1.1) !important;
-          box-shadow: 0 6px 24px rgba(244, 165, 28, 0.5);
+          transform: scale(1.06) !important;
+          box-shadow: 0 14px 30px rgba(15, 23, 42, 0.24);
+        }
+
+        .chat-toggle-btn svg {
+          display: block;
         }
 
         .cart-badge {
           position: absolute;
           top: -4px;
           right: -4px;
-          background-color: rgba(9, 33, 67, 1);
+          background-color: #0f172a;
           color: white;
           font-size: 11px;
           font-weight: 700;
@@ -392,24 +396,24 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
           position: fixed;
           bottom: 100px;
           right: 24px;
-          width: 400px;
-          max-width: calc(100vw - 48px);
-          height: 650px;
+          width: min(360px, calc(100vw - 48px));
           max-height: calc(100vh - 140px);
-          background-color: white;
-          border-radius: 20px;
-          box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+          background-color: #f8f9fb;
+          border-radius: 18px;
+          border: 1px solid #e8edf3;
+          box-shadow: 0 24px 60px rgba(9, 33, 67, 0.18);
           display: flex;
           flex-direction: column;
           overflow: hidden;
           z-index: 9999;
-          animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: slideUp 0.28s ease;
+          font-family: var(--chat-font);
         }
 
         @keyframes slideUp {
           from {
             opacity: 0;
-            transform: translateY(20px) scale(0.95);
+            transform: translateY(18px) scale(0.96);
           }
           to {
             opacity: 1;
@@ -419,13 +423,14 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
 
         /* Header */
         .chat-header {
-          background: linear-gradient(135deg, rgba(9, 33, 67, 1) 0%, rgba(9, 33, 67, 0.95) 100%);
-          color: white;
-          padding: 20px;
+          background: rgba(255, 255, 255, 0.92);
+          color: #0f172a;
+          padding: 16px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          border-bottom: 1px solid #eef2f7;
+          backdrop-filter: blur(10px);
         }
 
         .chat-header-content {
@@ -436,18 +441,19 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         }
 
         .chat-avatar {
-          width: 44px;
-          height: 44px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
-          background: linear-gradient(135deg, rgb(244, 165, 28) 0%, rgba(244, 165, 28, 0.8) 100%);
+          background: #f4a51c;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 8px rgba(244, 165, 28, 0.3);
+          color: #1f2937;
+          box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
         }
 
         .bot-avatar {
-          background: linear-gradient(135deg, rgb(244, 165, 28) 0%, rgba(244, 165, 28, 0.8) 100%);
+          background: #f4a51c;
         }
 
         .chat-header-info {
@@ -455,52 +461,42 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         }
 
         .chat-header-name {
-          font-weight: 700;
-          font-size: 16px;
+          font-weight: 600;
+          font-size: 14px;
+          letter-spacing: 0.2px;
           margin-bottom: 2px;
         }
 
         .chat-header-status {
           font-size: 12px;
-          opacity: 0.85;
+          color: #16a34a;
           display: flex;
           align-items: center;
           gap: 6px;
         }
 
         .chat-header-status::before {
-          content: '';
-          width: 8px;
-          height: 8px;
-          background-color: #10b981;
-          border-radius: 50%;
-          display: inline-block;
-          animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
+          display: none;
         }
 
         .chat-cart-indicator {
-          background: rgba(255, 255, 255, 0.15);
-          padding: 6px 12px;
-          border-radius: 20px;
+          background: #f1f5f9;
+          padding: 6px 10px;
+          border-radius: 999px;
           font-size: 12px;
           font-weight: 600;
-          backdrop-filter: blur(10px);
+          color: #475569;
         }
 
         /* Mensajes */
         .chat-messages {
           flex: 1;
           overflow-y: auto;
-          padding: 20px;
-          background: linear-gradient(to bottom, #f0f2f5 0%, #e8eaf0 100%);
+          padding: 16px;
+          background: #f6f7fb;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 10px;
         }
 
         .chat-messages::-webkit-scrollbar {
@@ -512,21 +508,21 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         }
 
         .chat-messages::-webkit-scrollbar-thumb {
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 3px;
+          background: rgba(15, 23, 42, 0.15);
+          border-radius: 999px;
         }
 
         .message-wrapper {
           display: flex;
           align-items: flex-end;
           gap: 8px;
-          animation: messageSlide 0.3s ease-out;
+          animation: messageSlide 0.16s ease-out;
         }
 
         @keyframes messageSlide {
           from {
             opacity: 0;
-            transform: translateY(10px);
+            transform: translateY(8px);
           }
           to {
             opacity: 1;
@@ -539,8 +535,8 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         }
 
         .message-avatar {
-          width: 28px;
-          height: 28px;
+          width: 26px;
+          height: 26px;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -549,35 +545,31 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         }
 
         .bot-avatar-small {
-          background: linear-gradient(135deg, rgb(244, 165, 28) 0%, rgba(244, 165, 28, 0.8) 100%);
-          color: white;
-        }
-
-        .user-avatar-small {
-          background: linear-gradient(135deg, rgba(9, 33, 67, 1) 0%, rgba(9, 33, 67, 0.8) 100%);
-          color: white;
+          background: #e2e8f0;
+          color: #334155;
         }
 
         .message-bubble {
-          max-width: 75%;
-          padding: 12px 16px;
-          border-radius: 18px;
+          max-width: 70%;
+          padding: 10px 12px;
+          border-radius: 16px;
           position: relative;
           word-wrap: break-word;
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
         }
 
         .bot-bubble {
-          background: white;
-          color: #1f2937;
-          border-bottom-left-radius: 4px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          background: #ffffff;
+          color: #0f172a;
+          border: 1px solid #edf1f6;
+          border-bottom-left-radius: 8px;
+          box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
         }
 
         .user-bubble {
-          background: linear-gradient(135deg, rgb(244, 165, 28) 0%, rgba(244, 165, 28, 0.9) 100%);
-          color: white;
-          border-bottom-right-radius: 4px;
-          box-shadow: 0 2px 8px rgba(244, 165, 28, 0.3);
+          background: #334155;
+          color: #f8fafc;
+          border-bottom-right-radius: 8px;
         }
 
         .message-text {
@@ -587,9 +579,19 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
           margin-bottom: 4px;
         }
 
+        .message-text ul,
+        .message-text ol {
+          padding-left: 18px;
+          margin: 6px 0 0;
+        }
+
+        .message-text li {
+          margin: 2px 0;
+        }
+
         .message-time {
-          font-size: 10px;
-          opacity: 0.7;
+          font-size: 11px;
+          color: #94a3b8;
           margin-top: 4px;
           text-align: right;
         }
@@ -598,70 +600,71 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         .typing-indicator {
           display: flex;
           gap: 6px;
-          padding: 12px 16px;
-          background: white;
-          border-radius: 18px;
-          border-bottom-left-radius: 4px;
+          padding: 8px 12px;
+          background: #ffffff;
+          border-radius: 14px;
+          border: 1px solid #eef2f7;
           width: fit-content;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
         }
 
         .typing-dot {
-          width: 8px;
-          height: 8px;
-          background: #9ca3af;
+          width: 6px;
+          height: 6px;
+          background: #94a3b8;
           border-radius: 50%;
-          animation: typing 1.4s infinite;
+          animation: typing 1.2s infinite;
         }
 
         @keyframes typing {
           0%, 60%, 100% {
             transform: translateY(0);
-            opacity: 0.7;
+            opacity: 0.6;
           }
           30% {
-            transform: translateY(-8px);
+            transform: translateY(-6px);
             opacity: 1;
           }
         }
 
         /* Input */
         .chat-input-container {
-          padding: 16px;
-          background: white;
-          border-top: 1px solid #e5e7eb;
+          padding: 12px 14px;
+          background: #ffffff;
+          border-top: 1px solid #eef2f7;
           display: flex;
-          gap: 10px;
+          gap: 8px;
           align-items: center;
         }
 
         .chat-input {
           flex: 1;
-          padding: 12px 18px;
-          border: 2px solid #e5e7eb;
-          border-radius: 24px;
+          padding: 10px 12px;
+          border: 1px solid #e6edf5;
+          border-radius: 12px;
           font-size: 14px;
           outline: none;
           transition: all 0.2s;
           font-family: inherit;
+          background: #f8fafc;
         }
 
         .chat-input:focus {
-          border-color: rgb(244, 165, 28);
-          box-shadow: 0 0 0 3px rgba(244, 165, 28, 0.1);
+          border-color: rgba(244, 165, 28, 0.6);
+          box-shadow: 0 0 0 4px rgba(244, 165, 28, 0.15);
         }
 
         .chat-input:disabled {
-          background-color: #f3f4f6;
+          background-color: #f1f5f9;
           cursor: not-allowed;
         }
 
         .chat-send-btn {
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, rgb(244, 165, 28) 0%, rgba(244, 165, 28, 0.9) 100%);
-          color: white;
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          background: #f4a51c;
+          color: #1f2937;
           border: none;
           cursor: pointer;
           display: flex;
@@ -672,33 +675,37 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         }
 
         .chat-send-btn:hover:not(:disabled) {
-          transform: scale(1.1);
-          box-shadow: 0 4px 12px rgba(244, 165, 28, 0.4);
+          transform: translateY(-1px);
+          background: #e39618;
         }
 
         .chat-send-btn:disabled {
-          background: #d1d5db;
+          background: #e2e8f0;
+          color: #94a3b8;
           cursor: not-allowed;
           transform: none;
         }
 
         /* Resumen carrito */
         .chat-cart-summary {
-          padding: 10px 16px;
-          background: #f9fafb;
-          border-top: 1px solid #e5e7eb;
+          padding: 8px 14px 10px;
+          background: #f8fafc;
+          border-top: 1px solid #eef2f7;
           font-size: 12px;
-          color: #6b7280;
+          color: #64748b;
           text-align: center;
         }
 
         /* Responsive */
         @media (max-width: 480px) {
+          .message-bubble {
+            max-width: 85%;
+          }
+
           .chat-window {
             right: 12px;
             bottom: 80px;
             width: calc(100vw - 24px);
-            height: calc(100vh - 100px);
             max-height: calc(100vh - 100px);
           }
 

@@ -8,7 +8,6 @@ import Navigation from './components/Header/Navigation'
 
 // Componentes globales
 import Footer from './components/Footer/Footer'
-import WhatsAppChat from './components/WhatsAppChat/WhatsAppChat'
 import B2BChat from './components/B2BChat/B2BChat'
 import LoginModal from './components/Auth/LoginModal'
 
@@ -131,9 +130,6 @@ function App() {
           userId={user.userId}
           isAuthenticated={user.isAuthenticated}
         />
-
-        {/* WhatsApp para usuarios no autenticados */}
-        {!user.isAuthenticated && <WhatsAppChat />}
 
         {/* Modal de Login */}
         {isLoginOpen && (

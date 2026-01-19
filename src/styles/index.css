@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Lato:wght@400;700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,8 +8,6 @@
    IMBLASCO.CL - CSS 100% IDÉNTICO
    Variables y estilos exactos del sitio original
    ============================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&family=Lato:wght@400;700;900&display=swap');
 
 :root {
   /* === COLORES PRINCIPALES === */
