@@ -10,6 +10,9 @@ import { MessageCircle, X, Send, Bot, User } from "lucide-react";
 // API URL (configuración centralizada)
 import { API_URL } from '../../config/api.js'
 
+const USE_CHAT_STREAM = import.meta.env.VITE_USE_CHAT_STREAM === 'true' || import.meta.env.VITE_USE_CHAT_STREAM === true
+if (import.meta.env.DEV) console.log('[B2BChat] Streaming activo:', USE_CHAT_STREAM)
+
 /**
  * Componente principal del Chat B2B con IA
  */
@@ -108,7 +111,7 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
   };
 
   /**
-   * Enviar mensaje al backend con IA
+   * Enviar mensaje al backend con IA (normal o streaming según VITE_USE_CHAT_STREAM)
    */
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading || !userId) return;
@@ -118,64 +121,104 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
     addUserMessage(userMessage);
     setIsLoading(true);
 
-    try {
-      // Obtener historial de conversación (últimos 10 mensajes)
-      const conversationHistory = messages.slice(-10).map((msg) => ({
-        role: msg.sender === "user" ? "user" : "assistant",
-        content: msg.text,
-      }));
+    const messageUrl = USE_CHAT_STREAM ? `${API_URL}/chat/message/stream` : `${API_URL}/chat/message`;
+    const body = {
+      userId: userId,
+      message: userMessage,
+      ...(USE_CHAT_STREAM ? {} : { conversationHistory: messages.slice(-10).map((msg) => ({ role: msg.sender === "user" ? "user" : "assistant", content: msg.text })) }),
+    };
 
-      const response = await fetch(`${API_URL}/chat/message`, {
+    try {
+      const response = await fetch(messageUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: userId,
-          message: userMessage,
-          conversationHistory,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      if (USE_CHAT_STREAM) {
+        addBotMessage("");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let fullText = "";
 
-      if (data.success) {
-        addBotMessage(
-          data.botMessage ||
-            data.message ||
-            "Lo siento, no pude procesar tu mensaje."
-        );
-        if (data.cart) setCart(data.cart);
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const payload = JSON.parse(line.slice(6));
+                if (payload.text != null) {
+                  fullText += payload.text;
+                  const toShow = fullText;
+                  setMessages((prev) => {
+                    const next = [...prev];
+                    const last = next[next.length - 1];
+                    if (last?.sender === "bot") next[next.length - 1] = { ...last, text: toShow };
+                    return next;
+                  });
+                  // Forzar que React pinte este frame (evita que batching esconda el streaming si llegan muchos chunks juntos)
+                  await new Promise((r) => { requestAnimationFrame(r); });
+                }
+                if (payload.done === true) {
+                  const finalText = payload.botMessage ?? fullText;
+                  setMessages((prev) => {
+                    const next = [...prev];
+                    if (next[next.length - 1]?.sender === "bot") next[next.length - 1] = { ...next[next.length - 1], text: finalText };
+                    return next;
+                  });
+                  if (payload.cart) setCart(payload.cart);
+                }
+              } catch (_) {}
+            }
+          }
+        }
       } else {
-        throw new Error(data.error || "Error desconocido");
+        const data = await response.json();
+        if (data.success) {
+          addBotMessage(
+            data.botMessage ||
+              data.message ||
+              "Lo siento, no pude procesar tu mensaje."
+          );
+          if (data.cart) setCart(data.cart);
+        } else {
+          throw new Error(data.error || "Error desconocido");
+        }
       }
     } catch (error) {
       console.error("Error al enviar mensaje:", error);
-
-      // Mensajes de error más específicos
       let errorMessage = "⚠️ Lo siento, hubo un error al procesar tu mensaje.";
-
-      if (
-        error.message.includes("Failed to fetch") ||
-        error.message.includes("NetworkError")
-      ) {
-        errorMessage =
-          "⚠️ Error de conexión con el backend. Por favor, intenta de nuevo.";
-      } else if (error.message.includes("HTTP 500")) {
-        errorMessage =
-          "⚠️ Error en el servidor. Por favor, intenta de nuevo en un momento.";
-      } else if (error.message.includes("HTTP 400")) {
-        errorMessage =
-          "⚠️ Error en la solicitud. Por favor, verifica tu mensaje.";
+      if (error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError")) {
+        errorMessage = "⚠️ Error de conexión con el backend. Por favor, intenta de nuevo.";
+      } else if (error.message?.includes("HTTP 500")) {
+        errorMessage = "⚠️ Error en el servidor. Por favor, intenta de nuevo en un momento.";
+      } else if (error.message?.includes("HTTP 400")) {
+        errorMessage = "⚠️ Error en la solicitud. Por favor, verifica tu mensaje.";
       } else if (error.message) {
         errorMessage = `⚠️ ${error.message}`;
       }
-
-      addBotMessage(errorMessage);
+      if (USE_CHAT_STREAM) {
+        setMessages((prev) => {
+          const next = [...prev];
+          const last = next[next.length - 1];
+          if (last?.sender === "bot" && (last.text === "" || last.text == null)) {
+            next[next.length - 1] = { ...last, text: errorMessage };
+            return next;
+          }
+          return [...next, { id: Date.now() + Math.random(), text: errorMessage, sender: "bot", timestamp: new Date() }];
+        });
+      } else {
+        addBotMessage(errorMessage);
+      }
     } finally {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
