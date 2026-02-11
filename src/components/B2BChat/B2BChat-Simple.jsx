@@ -263,19 +263,22 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
                 >
                   {msg.text}
                 </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: "#999",
-                    marginTop: "4px",
-                    paddingLeft: "4px",
-                  }}
-                >
-                  {new Date(msg.timestamp).toLocaleTimeString("es-CL", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
+                {/* No mostrar hora mientras el bot está escribiendo (ya sale al final del mensaje cuando termina) */}
+                {!(isLoading && messages[messages.length - 1]?.id === msg.id && msg.sender === "bot") && (
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: "#999",
+                      marginTop: "4px",
+                      paddingLeft: "4px",
+                    }}
+                  >
+                    {new Date(msg.timestamp).toLocaleTimeString("es-CL", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                )}
               </div>
             ))}
 

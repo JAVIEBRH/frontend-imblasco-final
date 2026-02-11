@@ -140,7 +140,7 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
       }
 
       if (USE_CHAT_STREAM) {
-        addBotMessage("");
+        // No añadir mensaje vacío al inicio: así solo se ven los puntitos, sin burbuja/contenedor vacío
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
@@ -162,17 +162,25 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
                   setMessages((prev) => {
                     const next = [...prev];
                     const last = next[next.length - 1];
-                    if (last?.sender === "bot") next[next.length - 1] = { ...last, text: toShow };
+                    if (last?.sender === "bot") {
+                      next[next.length - 1] = { ...last, text: toShow };
+                    } else {
+                      next.push({ id: Date.now() + Math.random(), text: toShow, sender: "bot", timestamp: new Date() });
+                    }
                     return next;
                   });
-                  // Forzar que React pinte este frame (evita que batching esconda el streaming si llegan muchos chunks juntos)
                   await new Promise((r) => { requestAnimationFrame(r); });
                 }
                 if (payload.done === true) {
                   const finalText = payload.botMessage ?? fullText;
                   setMessages((prev) => {
                     const next = [...prev];
-                    if (next[next.length - 1]?.sender === "bot") next[next.length - 1] = { ...next[next.length - 1], text: finalText };
+                    const last = next[next.length - 1];
+                    if (last?.sender === "bot") {
+                      next[next.length - 1] = { ...last, text: finalText };
+                    } else {
+                      next.push({ id: Date.now() + Math.random(), text: finalText, sender: "bot", timestamp: new Date() });
+                    }
                     return next;
                   });
                   if (payload.cart) setCart(payload.cart);
@@ -318,32 +326,40 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
                   }`}
                 >
                   <div className="message-text">{msg.text}</div>
-                  <div className="message-time">
-                    {new Date(msg.timestamp).toLocaleTimeString("es-CL", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
+                  {/* No mostrar hora mientras el bot está escribiendo (ya sale al final del mensaje cuando termina) */}
+                  {!(isLoading && messages[messages.length - 1]?.id === msg.id && msg.sender === "bot") && (
+                    <div className="message-time">
+                      {new Date(msg.timestamp).toLocaleTimeString("es-CL", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  )}
                 </div>
                 {msg.sender === "user" && null}
               </div>
             ))}
 
-            {/* Indicador de escritura */}
+            {/* Indicador de escritura (misma estructura que mensaje del bot: avatar + puntitos) */}
             {isLoading && (
-              <div className="typing-indicator">
-                <div
-                  className="typing-dot"
-                  style={{ animationDelay: "0s" }}
-                ></div>
-                <div
-                  className="typing-dot"
-                  style={{ animationDelay: "0.2s" }}
-                ></div>
-                <div
-                  className="typing-dot"
-                  style={{ animationDelay: "0.4s" }}
-                ></div>
+              <div className="message-wrapper bot-message">
+                <div className="message-avatar bot-avatar-small">
+                  <Bot size={14} />
+                </div>
+                <div className="typing-indicator">
+                  <div
+                    className="typing-dot"
+                    style={{ animationDelay: "0s" }}
+                  ></div>
+                  <div
+                    className="typing-dot"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
+                  <div
+                    className="typing-dot"
+                    style={{ animationDelay: "0.4s" }}
+                  ></div>
+                </div>
               </div>
             )}
 
