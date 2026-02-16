@@ -81,9 +81,9 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
   };
 
   /**
-   * Agregar mensaje del bot
+   * Agregar mensaje del bot (opcional: product y productSearchResults de la API)
    */
-  const addBotMessage = (text) => {
+  const addBotMessage = (text, extra = {}) => {
     setMessages((prev) => [
       ...prev,
       {
@@ -91,6 +91,8 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
         text,
         sender: "bot",
         timestamp: new Date(),
+        ...(extra.product != null && { product: extra.product }),
+        ...(Array.isArray(extra.productSearchResults) && extra.productSearchResults.length > 0 && { productSearchResults: extra.productSearchResults }),
       },
     ]);
   };
@@ -176,10 +178,24 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
                   setMessages((prev) => {
                     const next = [...prev];
                     const last = next[next.length - 1];
+                    const payloadProduct = payload.product != null ? payload.product : undefined;
+                    const payloadList = Array.isArray(payload.productSearchResults) && payload.productSearchResults.length > 0 ? payload.productSearchResults : undefined;
                     if (last?.sender === "bot") {
-                      next[next.length - 1] = { ...last, text: finalText };
+                      next[next.length - 1] = {
+                        ...last,
+                        text: finalText,
+                        ...(payloadProduct != null && { product: payloadProduct }),
+                        ...(payloadList != null && { productSearchResults: payloadList }),
+                      };
                     } else {
-                      next.push({ id: Date.now() + Math.random(), text: finalText, sender: "bot", timestamp: new Date() });
+                      next.push({
+                        id: Date.now() + Math.random(),
+                        text: finalText,
+                        sender: "bot",
+                        timestamp: new Date(),
+                        ...(payloadProduct != null && { product: payloadProduct }),
+                        ...(payloadList != null && { productSearchResults: payloadList }),
+                      });
                     }
                     return next;
                   });
@@ -195,7 +211,8 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
           addBotMessage(
             data.botMessage ||
               data.message ||
-              "Lo siento, no pude procesar tu mensaje."
+              "Lo siento, no pude procesar tu mensaje.",
+            { product: data.product, productSearchResults: data.productSearchResults }
           );
           if (data.cart) setCart(data.cart);
         } else {
@@ -326,6 +343,74 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
                   }`}
                 >
                   <div className="message-text">{msg.text}</div>
+                  {/* Card de un producto (cuando la API devuelve product) */}
+                  {msg.sender === "bot" && msg.product && (
+                    <div className="chat-product-card">
+                      <div className="chat-product-card-image">
+                        {msg.product.imageUrl ? (
+                          <img
+                            src={msg.product.imageUrl}
+                            alt={msg.product.name || "Producto"}
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                              e.target.nextElementSibling?.classList.remove("chat-product-card-placeholder-hidden");
+                            }}
+                          />
+                        ) : null}
+                        <div className={`chat-product-card-placeholder ${msg.product.imageUrl ? "chat-product-card-placeholder-hidden" : ""}`}>📦</div>
+                      </div>
+                      <div className="chat-product-card-body">
+                        <div className="chat-product-name">{msg.product.name}</div>
+                        {msg.product.sku && <div className="chat-product-sku">SKU: {msg.product.sku}</div>}
+                        {msg.product.price != null && <div className="chat-product-price">${Number(msg.product.price).toLocaleString("es-CL")}</div>}
+                        <div className="chat-product-stock">
+                          {msg.product.stock_quantity != null && Number(msg.product.stock_quantity) > 0
+                            ? `Stock: ${msg.product.stock_quantity} un.`
+                            : "AGOTADO – 0 un."}
+                        </div>
+                        {msg.product.coming_soon?.activo && msg.product.coming_soon?.fecha && (
+                          <div className="chat-product-coming">Próxima llegada: {msg.product.coming_soon.fecha}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {/* Lista de cards (cuando la API devuelve productSearchResults) */}
+                  {msg.sender === "bot" && msg.productSearchResults && msg.productSearchResults.length > 0 && (
+                    <div className="chat-product-list">
+                      {msg.productSearchResults.slice(0, 8).map((p, i) => (
+                        <div key={p.sku ? `sku-${p.sku}` : i} className="chat-product-card">
+                          <div className="chat-product-card-image">
+                            {p.imageUrl ? (
+                              <img
+                                src={p.imageUrl}
+                                alt={p.name || "Producto"}
+                                referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                  e.target.style.display = "none";
+                                  e.target.nextElementSibling?.classList.remove("chat-product-card-placeholder-hidden");
+                                }}
+                              />
+                            ) : null}
+                            <div className={`chat-product-card-placeholder ${p.imageUrl ? "chat-product-card-placeholder-hidden" : ""}`}>📦</div>
+                          </div>
+                          <div className="chat-product-card-body">
+                            <div className="chat-product-name">{p.name}</div>
+                            {p.sku && <div className="chat-product-sku">SKU: {p.sku}</div>}
+                            {p.price != null && <div className="chat-product-price">${Number(p.price).toLocaleString("es-CL")}</div>}
+                            <div className="chat-product-stock">
+                              {p.stock_quantity != null && Number(p.stock_quantity) > 0
+                                ? `Stock: ${p.stock_quantity} un.`
+                                : "AGOTADO – 0 un."}
+                            </div>
+                            {p.coming_soon?.activo && p.coming_soon?.fecha && (
+                              <div className="chat-product-coming">Próxima llegada: {p.coming_soon.fecha}</div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {/* No mostrar hora mientras el bot está escribiendo (ya sale al final del mensaje cuando termina) */}
                   {!(isLoading && messages[messages.length - 1]?.id === msg.id && msg.sender === "bot") && (
                     <div className="message-time">
@@ -653,6 +738,77 @@ const B2BChat = ({ userId, isAuthenticated = false }) => {
           color: #94a3b8;
           margin-top: 4px;
           text-align: right;
+        }
+
+        .chat-product-card {
+          margin-top: 10px;
+          padding: 0;
+          background: #f8fafc;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          font-size: 13px;
+          display: flex;
+          flex-direction: row;
+          overflow: hidden;
+        }
+        .chat-product-card-image {
+          position: relative;
+          flex-shrink: 0;
+          width: 80px;
+          height: 80px;
+          background: #e2e8f0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+        .chat-product-card-image img {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        .chat-product-card-placeholder {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+          color: #94a3b8;
+          background: #e2e8f0;
+        }
+        .chat-product-card-placeholder-hidden {
+          display: none;
+        }
+        .chat-product-card-body {
+          padding: 10px 12px;
+          flex: 1;
+          min-width: 0;
+        }
+        .chat-product-name { font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .chat-product-sku, .chat-product-price, .chat-product-stock { color: #475569; margin-top: 2px; }
+        .chat-product-coming { margin-top: 6px; color: #b45309; font-weight: 500; }
+
+        .chat-product-list {
+          margin-top: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .chat-product-list .chat-product-card {
+          margin-top: 0;
+        }
+        @media (max-width: 380px) {
+          .chat-product-card {
+            flex-direction: column;
+          }
+          .chat-product-card-image {
+            width: 100%;
+            height: 120px;
+          }
         }
 
         /* Indicador de escritura */
